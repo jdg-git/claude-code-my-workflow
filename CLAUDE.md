@@ -1,13 +1,9 @@
 # CLAUDE.MD -- Academic Project Development with Claude Code
 
-<!-- HOW TO USE: Replace [BRACKETED PLACEHOLDERS] with your project info.
-     Customize Beamer environments and CSS classes for your theme.
-     Keep this file under ~150 lines — Claude loads it every session.
-     See the guide at docs/workflow-guide.html for full documentation. -->
-
-**Project:** [YOUR PROJECT NAME]
-**Institution:** [YOUR INSTITUTION]
+**Project:** Capital and Labor Shares in Healthcare
+**Institution:** University of Chicago
 **Branch:** main
+**Template:** Based on [Dingel projecttemplate](https://github.com/jdingel/projecttemplate)
 
 ---
 
@@ -24,32 +20,59 @@
 ## Folder Structure
 
 ```
-[YOUR-PROJECT]/
+capital-labor-healthcare/
 ├── CLAUDE.MD                    # This file
 ├── .claude/                     # Rules, skills, agents, hooks
-├── Bibliography_base.bib        # Centralized bibliography
-├── Figures/                     # Figures and images
-├── Preambles/header.tex         # LaTeX headers
-├── Slides/                      # Beamer .tex files
+├── bib/                         # Bibliography (bib.bib + aer.bst)
+├── logbook/                     # Project logbook (LaTeX)
+├── paper/                       # Paper manuscript (LaTeX)
+├── slides/                      # Beamer .tex files (metropolis theme)
+├── tasks/                       # Task-based DAG (code/input/output per task)
 ├── Quarto/                      # RevealJS .qmd files + theme
 ├── docs/                        # GitHub Pages (auto-generated)
-├── scripts/                     # Utility scripts + R code
+├── scripts/                     # Utility scripts
 ├── quality_reports/             # Plans, session logs, merge reports
 ├── explorations/                # Research sandbox (see rules)
 ├── templates/                   # Session log, quality report templates
 └── master_supporting_docs/      # Papers and existing slides
 ```
 
+### Task Structure (Dingel Convention)
+
+Each task in `tasks/` follows:
+```
+tasks/task_name/
+├── code/
+│   ├── Makefile              # Build rules (include generic.make)
+│   └── main.do               # Entry point
+├── input/                    # Symlinks to upstream task output/
+└── output/                   # Task outputs (.dta, .csv, .png, .tex)
+```
+
+Shared build infrastructure:
+- `tasks/generic.make` — directory creation, upstream dependency rules
+- `tasks/shell_functions.sh` — Stata/Python/R execution wrappers
+- `tasks/shell_functions.make` — Make variables for language commands
+
 ---
 
 ## Commands
 
 ```bash
-# LaTeX (3-pass, XeLaTeX only)
-cd Slides && TEXINPUTS=../Preambles:$TEXINPUTS xelatex -interaction=nonstopmode file.tex
-BIBINPUTS=..:$BIBINPUTS bibtex file
-TEXINPUTS=../Preambles:$TEXINPUTS xelatex -interaction=nonstopmode file.tex
-TEXINPUTS=../Preambles:$TEXINPUTS xelatex -interaction=nonstopmode file.tex
+# LaTeX slides (3-pass, XeLaTeX)
+cd slides && xelatex -interaction=nonstopmode slides.tex
+BIBINPUTS=../bib:$BIBINPUTS bibtex slides
+xelatex -interaction=nonstopmode slides.tex
+xelatex -interaction=nonstopmode slides.tex
+
+# Or use Make:
+cd slides && make
+
+# Stata (run a task via Make)
+cd tasks/task_name/code && make
+
+# Stata (run a task directly)
+cd tasks/task_name && stata-mp -b do code/main.do
 
 # Deploy Quarto to GitHub Pages
 ./scripts/sync_to_docs.sh LectureN
@@ -92,36 +115,32 @@ python scripts/quality_score.py Quarto/file.qmd
 | `/research-ideation [topic]` | Research questions + strategies |
 | `/interview-me [topic]` | Interactive research interview |
 | `/review-paper [file]` | Manuscript review |
-| `/data-analysis [dataset]` | End-to-end R analysis |
+| `/data-analysis [dataset]` | End-to-end Stata analysis |
 
 ---
 
-<!-- CUSTOMIZE: Replace the example entries below with your own
-     Beamer environments and Quarto CSS classes. These are examples
-     from the original project — delete them and add yours. -->
+## Beamer Environments (Metropolis Theme)
 
-## Beamer Custom Environments
+| Environment | Effect | Use Case |
+|-------------|--------|----------|
+| `block{Title}` | Standard titled block | General emphasis, definitions |
+| `alertblock{Title}` | Alert-colored block | Key results, warnings |
+| `exampleblock{Title}` | Example-colored block | Examples, illustrations |
+| `frame[plain]` | No header/footer | Title slides, full-page figures |
 
-| Environment       | Effect        | Use Case       |
-|-------------------|---------------|----------------|
-| `[your-env]`      | [Description] | [When to use]  |
-
-<!-- Example entries (delete and replace with yours):
-| `keybox` | Gold background box | Key points |
-| `highlightbox` | Gold left-accent box | Highlights |
-| `definitionbox[Title]` | Blue-bordered titled box | Formal definitions |
--->
+*Using standard metropolis theme. No custom box environments.*
 
 ## Quarto CSS Classes
 
-| Class              | Effect        | Use Case       |
-|--------------------|---------------|----------------|
-| `[.your-class]`    | [Description] | [When to use]  |
-
-<!-- Example entries (delete and replace with yours):
-| `.smaller` | 85% font | Dense content slides |
-| `.positive` | Green bold | Good annotations |
--->
+| Class | Effect | Use Case |
+|-------|--------|----------|
+| `.smaller` | 85% font | Dense data slides |
+| `.uchicago-maroon` | Maroon text | Institutional emphasis |
+| `.uchicago-phoenix` | Phoenix yellow text | Highlight accents |
+| `.hi` | Bold maroon | Key terms inline |
+| `.positive` | Green bold | Positive results/effects |
+| `.negative` | Red bold | Negative results/concerns |
+| `.compact` | Tight spacing | Content-heavy slides |
 
 ---
 
@@ -129,5 +148,4 @@ python scripts/quality_score.py Quarto/file.qmd
 
 | Lecture | Beamer | Quarto | Key Content |
 |---------|--------|--------|-------------|
-| 1: [Topic] | `Lecture01_Topic.tex` | `Lecture1_Topic.qmd` | [Brief description] |
-| 2: [Topic] | `Lecture02_Topic.tex` | -- | [Brief description] |
+| Main | `slides/slides.tex` | -- | Metropolis theme; sections via `\input{sections/*.tex}` |
